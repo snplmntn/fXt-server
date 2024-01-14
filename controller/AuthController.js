@@ -1,9 +1,8 @@
 const connection = require("../db");
 const bcrypt = require("bcrypt");
-// const jwt = require("jsonwebtoken");
 
 const user_signup = async (req, res) => {
-  const { username, email, password } = req.body;
+  const { name, username, email, password } = req.body;
   try {
     //Encrypt Password
     const salt = await bcrypt.genSalt(10);
@@ -11,8 +10,8 @@ const user_signup = async (req, res) => {
     //Create
     try {
       await connection.query(
-        "INSERT INTO userInfo (username, email, password) VALUES (?, ?, ?)",
-        [username, email, hashedPassword],
+        "INSERT INTO userInfo (name, username, email, password) VALUES (?, ?, ?, ?)",
+        [name, username, email, hashedPassword],
         async (err, results) => {
           return res.status(200).json({ message: "Signed Up" });
         }
@@ -30,11 +29,11 @@ const user_signup = async (req, res) => {
 };
 
 const user_login = async (req, res) => {
-  const { username, password } = req.body;
+  const { email, password } = req.body;
   try {
-    connection.query(
-      "SELECT * FROM userInfo WHERE username = ?",
-      username,
+    await connection.query(
+      "SELECT * FROM userInfo WHERE email = ?",
+      email,
       async (err, results) => {
         if (err) {
           console.error(err);
@@ -45,15 +44,8 @@ const user_login = async (req, res) => {
         if (results.length < 1) {
           return res.status(404).json({ message: "User not Found" });
         }
-        const validPassword = await bcrypt.compare(
-          password,
-          results[0].password
-        );
-        console.log(results[0].password);
-        if (!validPassword) {
-          return res.status(401).json({ message: "Invalid password" });
-        }
-        res
+        
+        return res
           .status(401)
           .json({ message: "Logged In Successfuly!", user: results[0] });
       }
