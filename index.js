@@ -1,12 +1,10 @@
 const express = require("express");
 const mysql = require("mysql");
 const cors = require("cors");
-const dotenv = require("dotenv");
 const connection = require("./db");
 
 const app = express();
 const port = 1234;
-dotenv.config();
 
 //Middlewares
 app.use(express.json());
@@ -27,6 +25,7 @@ const orderRoute = require("./routes/order/order");
 const reviewRoute = require("./routes/order/review");
 const cartRoute = require("./routes/order/cart");
 const voucherRoute = require("./routes/order/voucher");
+const aliveRoute = require("./routes/alive");
 
 app.use("/api/auth", authRoute);
 app.use("/api/account", accountRoute);
@@ -36,3 +35,5 @@ app.use("/api/order", orderRoute);
 app.use("/api/review", reviewRoute);
 app.use("/api/cart", cartRoute);
 app.use("/api/voucher", voucherRoute);
+
+app.use("/api/alive", aliveRoute);
