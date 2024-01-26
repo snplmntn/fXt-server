@@ -1,18 +1,15 @@
-const mysql = require("mysql");
+const mysql = require("mysql2");
 
-const connection = mysql.createConnection({
+const pool = mysql.createPool({
+  connectionLimit: 10000,
   host: "sql12.freesqldatabase.com",
-  user: "sql12672291",
-  password: "ujAUGKLrX7",
-  database: "sql12672291",
+  user: "sql12679856",
+  password: "6EpJvvzRHf",
+  database: "sql12679856",
+  waitForConnections: true,
+  queueLimit: 0,
 });
 
-connection.connect((err) => {
-  if (err) {
-    console.error("Error connecting to database:", err);
-    return;
-  }
-  console.log("Connected to MySQL database");
-});
+const connection = pool.promise();
 
 module.exports = connection;

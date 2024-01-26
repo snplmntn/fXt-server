@@ -2,6 +2,20 @@ const bcrypt = require("bcrypt");
 const connection = require("../db");
 // const jwt = require("jsonwebtoken");
 
+const user_index = async (req, res) => {
+  const dbconnection = await connection.getConnection();
+  try {
+    const [results] = await dbconnection.execute("SELECT COUNT(*) AS userCount FROM userInfo");
+
+      dbconnection.release()
+      const count = results[0].userCount;
+      return res.status(200).json({ message: "User Fetched", count});
+  } catch (err) {
+    return res.status(500).json({ message: "Internal Server Error", err });
+  }
+};
+
+
 const user_get = async (req, res) => {
   const { userId, username } = req.query;
 
@@ -19,21 +33,18 @@ const user_get = async (req, res) => {
         .json({ message: "Provide either userId or username" });
     }
 
-    await connection.query(query, values, (err, results) => {
-      if (err) {
-        console.error(err);
-        return res.status(500).json({ message: "Internal Server Error", err });
-      }
-
+    const dbconnection = await connection.getConnection();
+    const [results] = await dbconnection.execute(query, values);
       if (results.length < 1) {
         return res.status(404).json({ message: "User not found" });
       }
 
       const { password, ...other } = results[0];
+      dbconnection.release();
       return res.status(200).json({ message: "User Fetched", other });
-    });
   } catch (err) {
-    return res.status(500).json(err);
+    dbconnection.release();
+    return res.status(500).json({ message: "Internal Server Error", err });
   }
 };
 
@@ -66,24 +77,25 @@ const user_update = async (req, res) => {
   updateQuery += " WHERE userID = ?";
   values.push(userID);
 
+  const dbconnection = await connection.getConnection();
   try {
-    connection.query(updateQuery, values, (err, result) => {
-      if (err) {
-        console.error(err);
-        return res.status(500).json({ message: "Error updating user" });
-      }
-      if (result.affectedRows === 0) {
+    const [results] = await dbconnection.execute(updateQuery, values);
+
+      if (results.affectedRows === 0) {
+        dbconnection.release();
         return res.status(404).json({ message: "User not found" });
       }
-      res.status(200).json({ message: "User updated successfully" });
-    });
+      dbconnection.release();
+      return res.status(200).json({ message: "User updated successfully" });
   } catch (err) {
     console.error(err);
+    dbconnection.release();
     return res.status(500).json({ message: "Internal Server Error", err });
   }
 };
 
 module.exports = {
+  user_index,
   user_get,
   user_update,
 };

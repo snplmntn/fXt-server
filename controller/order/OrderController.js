@@ -1,28 +1,27 @@
 const connection = require("../../db");
 
 const order_index = async (req, res) => {
+  const dbconnection = await connection.getConnection();
   try {
-    await connection.query("SELECT * FROM orderInfo", (err, results) => {
-      if (err) {
-        console.error(err);
-        return res.status(500).json({ message: "Internal Server Error", err });
-      }
 
-      if (results.length < 1) {
-        return res.status(404).json({ message: "Orders not found" });
-      }
+    const [results] = await dbconnection.execute(`SELECT *
+    FROM orderInfo
+    JOIN userInfo ON orderInfo.userID = userInfo.userID
+    JOIN productInfo ON orderInfo.productID = productInfo.productID;
+    `);
 
-      return res.status(200).json({ message: "Order Fetched", results });
-    });
+      dbconnection.release();
+      return res.status(200).json({ message: "Order Fetched", results, count: results.length });
   } catch (err) {
-    return res.status(500).json(err);
+    dbconnection.release();
+    return res.status(500).json({ message: "Internal Server Error", err });
   }
 };
 
 const order_get = async (req, res) => {
   const { orderID, userID, productID, isConfirmed, isPayed, isComplete } =
     req.query;
-
+    const dbconnection = await connection.getConnection();
   try {
     let query, values;
     if (orderID) {
@@ -50,40 +49,37 @@ const order_get = async (req, res) => {
       });
     }
 
-    await connection.query(query, values, (err, results) => {
-      if (err) {
-        console.error(err);
-        return res.status(500).json({ message: "Internal Server Error", err });
-      }
+    const [results] = await dbconnection.execute(query, values);
 
       if (results.length < 1) {
+        dbconnection.release();
         return res.status(404).json({ message: "Order not found" });
       }
-
-      return res.status(200).json({ message: "Order/s Fetched", results });
-    });
+    
+    dbconnection.release();
+    return res.status(200).json({ message: "Order/s Fetched", results });
   } catch (err) {
-    return res.status(500).json(err);
+    dbconnection.release();
+    return res.status(500).json({ message: "Internal Server Error", err });
   }
 };
 
 const order_post = async (req, res) => {
-  const { userID, productID, note, quantity, payment, paymentMethod } =
+  const { userID, productID, note, address, number, quantity, totalPrice, paymentMethod } =
     req.body;
+
+    const dbconnection = await connection.getConnection();
   try {
     //Create Product
-    await connection.query(
-      "INSERT INTO orderInfo (userID, productID, note, quantity, payment, paymentMethod, dateOrdered) VALUES (?, ?, ?, ?, ?, ?, NOW())",
-      [userID, productID, note, quantity, payment, paymentMethod],
-      async (err, results) => {
-        if (err) {
-          console.error(err);
-          return res.status(500).json({ message: "Error Ordering" });
-        }
-        return res.status(200).json({ message: "Ordered" });
-      }
-    );
+    await dbconnection.execute(
+      "INSERT INTO orderInfo (userID, productID, note, address, number, quantity, totalPrice, paymentMethod, dateOrdered) VALUES (?, ?, ?, ?, ?, ?, ?, ?, NOW())",
+      [userID, productID, note, address, number, quantity, totalPrice, paymentMethod]);
+
+    await dbconnection.execute("UPDATE productInfo SET sold = sold + ? WHERE productID = ?", [quantity, productID]);
+      dbconnection.release();
+      return res.status(200).json({ message: "Ordered" });
   } catch (err) {
+    dbconnection.release();
     console.error(err);
     return res.status(500).json({ message: "Internal Server Error", err });
   }
@@ -91,7 +87,7 @@ const order_post = async (req, res) => {
 
 const order_put = async (req, res) => {
   const { orderID } = req.query;
-  const { note, paymentMethod, isConfirmed, isPayed, isComplete } = req.body;
+  const { note, paymentMethod, isPayed, status } = req.body;
 
   const updateFields = [];
   const values = [];
@@ -104,50 +100,46 @@ const order_put = async (req, res) => {
     updateFields.push("paymentMethod = ?");
     values.push(paymentMethod);
   }
-  if (isConfirmed !== undefined) {
-    updateFields.push("isConfirmed = ?");
-    values.push(isConfirmed);
-    if (isConfirmed === 1) {
-      updateFields.push("dateConfirmed = NOW()");
-    }
+
+  if (status !== undefined) {
+    updateFields.push("status = ?");
+    values.push(status);
   }
+
   if (isPayed !== undefined) {
     updateFields.push("isPayed = ?");
     values.push(isPayed);
-    if (isPayed === 1) {
-      updateFields.push("datePayed = NOW()");
-    }
-  }
-  if (isComplete !== undefined) {
-    updateFields.push("isComplete = ?");
-    values.push(isComplete);
   }
 
   if (updateFields.length === 0) {
     return res.status(400).json({ message: "No fields to update" });
   }
+  
 
-  const updateQuery = `UPDATE orderInfo SET ${updateFields.join(
-    ", "
-  )} WHERE orderID = ?`;
+  const updateQuery = `UPDATE orderInfo SET ${updateFields.join(", ")} WHERE orderID = ?`;
   values.push(orderID);
 
+
+  const dbconnection = await connection.getConnection();
+
   try {
-    connection.query(updateQuery, values, (err, result) => {
-      if (err) {
-        console.error(err);
-        return res.status(500).json({ message: "Error updating order" });
-      }
-      if (result.affectedRows === 0) {
-        return res.status(404).json({ message: "Order not found" });
-      }
-      res.status(200).json({ message: "Order updated successfully" });
-    });
+    const [results] = await dbconnection.execute(updateQuery, values);
+
+    if (results.affectedRows === 0) {
+      dbconnection.release();
+      return res.status(404).json({ message: "Order not found" });
+    }
+
+    dbconnection.release();
+    return res.status(200).json({ message: "Order updated successfully" });
+
   } catch (err) {
+    dbconnection.release();
     console.error(err);
     return res.status(500).json({ message: "Internal Server Error", err });
   }
 };
+
 
 module.exports = {
   order_index,
