@@ -20,6 +20,7 @@ const accountRoute = require("./routes/account");
 //Product
 const productRoute = require("./routes/product");
 const orderRoute = require("./routes/order/order");
+const inventoryRoute = require("./routes/order/inventory");
 const reviewRoute = require("./routes/order/review");
 const cartRoute = require("./routes/order/cart");
 const voucherRoute = require("./routes/order/voucher");
@@ -30,6 +31,7 @@ app.use("/api/account", accountRoute);
 
 app.use("/api/product", productRoute);
 app.use("/api/order", orderRoute);
+app.use("/api/inventory", inventoryRoute);
 app.use("/api/review", reviewRoute);
 app.use("/api/cart", cartRoute);
 app.use("/api/voucher", voucherRoute);

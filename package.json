@@ -8,5 +8,6 @@
   },
   "scripts": {
     "start": "nodemon index.js"
-  }
+  },
+  "signal": "SIGUSR2"
 }
