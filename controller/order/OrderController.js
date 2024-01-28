@@ -25,22 +25,46 @@ const order_get = async (req, res) => {
   try {
     let query, values;
     if (orderID) {
-      query = "SELECT * FROM orderInfo WHERE orderID = ?";
+      query = `SELECT *
+      FROM orderInfo
+      JOIN userInfo ON orderInfo.userID = userInfo.userID
+      JOIN productInfo ON orderInfo.productID = productInfo.productID
+      WHERE orderInfo.orderID = ?;`;
       values = [orderID];
     } else if (userID) {
-      query = "SELECT * FROM orderInfo WHERE userID = ?";
+      query = `SELECT *
+      FROM orderInfo
+      JOIN userInfo ON orderInfo.userID = userInfo.userID
+      JOIN productInfo ON orderInfo.productID = productInfo.productID
+      WHERE orderInfo.userID = ?;`;
       values = [userID];
     } else if (productID) {
-      query = "SELECT * FROM orderInfo WHERE productID = ?";
+      query = `SELECT *
+      FROM orderInfo
+      JOIN userInfo ON orderInfo.userID = userInfo.userID
+      JOIN productInfo ON orderInfo.productID = productInfo.productID
+      WHERE orderInfo.productID = ?`;
       values = [productID];
     } else if (isConfirmed) {
-      query = "SELECT * FROM productInfo WHERE isConfirmed = ?";
+      query = `SELECT *
+      FROM orderInfo
+      JOIN userInfo ON orderInfo.userID = userInfo.userID
+      JOIN productInfo ON orderInfo.productID = productInfo.productID
+      WHERE orderInfo.isConfirmed = ?`;
       values = [isConfirmed];
     } else if (isPayed) {
-      query = "SELECT * FROM productInfo WHERE isPayed = ?";
+      query = `SELECT *
+      FROM orderInfo
+      JOIN userInfo ON orderInfo.userID = userInfo.userID
+      JOIN productInfo ON orderInfo.productID = productInfo.productID
+      WHERE orderInfo.isPayed = ?`;
       values = [isPayed];
     } else if (isComplete) {
-      query = "SELECT * FROM productInfo WHERE isComplete = ?";
+      query = `SELECT *
+      FROM orderInfo
+      JOIN userInfo ON orderInfo.userID = userInfo.userID
+      JOIN productInfo ON orderInfo.productID = productInfo.productID
+      WHERE orderInfo.isComplete = ?`;
       values = [isComplete];
     } else {
       return res.status(400).json({
