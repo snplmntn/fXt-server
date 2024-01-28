@@ -8,9 +8,10 @@ const user_signup = async (req, res) => {
     //Encrypt Password
     const salt = await bcrypt.genSalt(10);
     const hashedPassword = await bcrypt.hash(password, salt);
-    //Create
+    
+    //Create User
+    const dbconnection = await connection.getConnection();
     try {
-      const dbconnection = await connection.getConnection();
       const [results] = await dbconnection.execute(
         "INSERT INTO userInfo (name, username, email, password) VALUES (?, ?, ?, ?)",
         [name, username, email, hashedPassword]);
