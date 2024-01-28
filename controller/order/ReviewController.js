@@ -4,7 +4,7 @@ const review_post = async (req, res) => {
   const { userID, feedback} = req.body;
 
   const dbconnection = await connection.getConnection();
-  const dateCreated = new Date.now()
+  const dateCreated = new Date()
   try {
     //Create Product
     await dbconnection.execute(
